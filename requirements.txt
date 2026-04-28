@@ -1,0 +1,19 @@
+# Core
+unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git
+transformers>=4.40.0
+datasets>=2.19.0
+peft>=0.10.0
+trl>=0.8.6
+accelerate>=0.29.0
+bitsandbytes>=0.43.0
+
+# Data / evaluation
+scikit-learn>=1.4.0
+pandas>=2.0.0
+numpy>=1.26.0
+
+# Config
+pyyaml>=6.0
+
+# Optional but recommended
+xformers  # faster attention kernels (install separately if needed)
