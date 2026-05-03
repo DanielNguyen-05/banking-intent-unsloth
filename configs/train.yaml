@@ -4,7 +4,9 @@
 # ─────────────────────────────────────────────
 
 data:
-  test_size: 0.2              # 20 % held-out test set
+  num_intents: 45             
+  samples_per_intent: 100      
+  test_size: 0.2              
   random_seed: 42
   train_csv: "sample_data/train.csv"
   test_csv:  "sample_data/test.csv"

@@ -77,8 +77,8 @@ python scripts/preprocess_data.py --config configs/train.yaml
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `num_intents` | 20 | Number of intent classes to keep |
-| `samples_per_intent` | 40 | Max samples per class |
+| `num_intents` | 45 | Number of intent classes to keep |
+| `samples_per_intent` | 100 | Max samples per class |
 | `test_size` | 0.2 | Fraction held out for testing |
 
 ---
@@ -86,7 +86,9 @@ python scripts/preprocess_data.py --config configs/train.yaml
 ## Step 2 – Train
 
 ```bash
-bash train.sh
+bash train.sh 
+# for a background training and the train will be saved in log file:
+nohup bash train.sh > train.log 2>&1 &
 # or directly:
 python scripts/train.py --config configs/train.yaml
 ```

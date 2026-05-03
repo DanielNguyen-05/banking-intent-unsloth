@@ -15,11 +15,9 @@ def build_prompt(text):
 
 def tokenize_fn(examples, tokenizer, label2id, max_len):
     prompts = [build_prompt(t) for t in examples["text"]]
-    full_texts = [p + " " + examples["intent"][i] for i, p in enumerate(prompts)]
-    enc = tokenizer(full_texts, truncation=True, max_length=max_len, padding="max_length")
+    enc = tokenizer(prompts, truncation=True, max_length=max_len, padding="max_length")
     enc["labels"] = [label2id[lbl] for lbl in examples["intent"]]
     return enc
-
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
     preds = np.argmax(logits, axis=-1)
