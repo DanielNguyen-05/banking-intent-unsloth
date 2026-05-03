@@ -236,8 +236,7 @@ wrong_exchange_rate_for_cash_withdrawal       0.87      1.00      0.93        20
 
 ## 🎬 Video Demonstration
 
-> 📎 **[Watch Demo Video (Google Drive)](https://drive.google.com/file/d/1gyGPLvOov3SalTT2vqSmCTk8Xr6aSKuX/view?usp=sharing)** *(ensure the video is set to public)*
-
+> 📎 **[Watch Demo Video (Google Drive)](https://drive.google.com/file/d/1gyGPLvOov3SalTT2vqSmCTk8Xr6aSKuX/view?usp=sharing)** 
 The video demonstrates:
 1. Running `inference.sh` interactively from the command line.
 2. Example input messages being processed by the fine-tuned LLaMA-3 model.
