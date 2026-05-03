@@ -2,4 +2,3 @@ venv
 __pycache__
 *.pyc
 unsloth_compiled_cache/
-outputs
