@@ -1,15 +1,17 @@
-# Banking Intent Classification with Unsloth
+# 🏦 Banking Intent Classification with Unsloth
 
-Fine-tuning an intent detection model on the **BANKING77** dataset using **Unsloth** LoRA fine-tuning. This project is submitted for *Project 2 – Applications of NLP in Industry*, HCMUS Faculty of Information Technology.
+> Fine-tuning **LLaMA-3 8B** for intent detection on the **BANKING77** dataset using **Unsloth LoRA** — achieving **95.00% accuracy** on 45 intent classes.
+
+This project is submitted for **Project 2 – Applications of NLP in Industry**, HCMUS Faculty of Information Technology.
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
-```
+```text
 banking-intent-unsloth/
 ├── scripts/
-│   ├── preprocess_data.py   # Download & preprocess BANKING77 subset
+│   ├── preprocess_data.py   # Download, sample & preprocess BANKING77 subset
 │   ├── train.py             # Fine-tune model with Unsloth + LoRA
 │   └── inference.py         # Standalone inference class & CLI
 │
@@ -34,15 +36,17 @@ banking-intent-unsloth/
 
 ---
 
-## Requirements
+## ⚙️ Requirements
 
-- Python **3.10+**
-- CUDA GPU (≥ 16 GB VRAM recommended; 8 GB possible with 4-bit + smaller batch)
-- CUDA 11.8 / 12.1+
+| Requirement | Version |
+|---|---|
+| Python | 3.10+ |
+| CUDA | 11.8 / 12.1+ |
+| VRAM | ≥ 16 GB recommended (8 GB possible with 4-bit + smaller batch) |
 
 ---
 
-## Environment Setup
+## 🚀 Environment Setup
 
 ```bash
 # 1. Create a virtual environment (recommended)
@@ -51,23 +55,23 @@ source venv/bin/activate          # Linux / macOS
 # venv\Scripts\activate           # Windows
 
 # 2. Install PyTorch with CUDA (choose the right CUDA version)
-pip install torch==2.7.0+cu128 torchvision==0.22.0+cu128 --index-url https://download.pytorch.org/whl/cu128
+pip install torch==2.7.0+cu128 torchvision==0.22.0+cu128 \
+    --index-url https://download.pytorch.org/whl/cu128
 
-# 3. Install Unsloth (install before other packages)
+# 3. Install Unsloth (must be installed before other packages)
 pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
 
 # 4. Install remaining dependencies
 pip install -r requirements.txt
 ```
 
-> **Note for local servers:** if `xformers` causes issues, remove it from `requirements.txt`.  
-> Unsloth will still work without it.
+> **Note:** If `xformers` causes issues on local servers, remove it from `requirements.txt`. Unsloth will still function correctly without it.
 
 ---
 
-## Step 1 – Preprocess Data
+## 📊 Step 1 – Preprocess Data
 
-Downloads BANKING77 from HuggingFace, samples a manageable subset, normalises text, and saves CSVs + a label map.
+Downloads BANKING77 from HuggingFace, samples a manageable subset, normalises text, and saves CSVs and a label map.
 
 ```bash
 python scripts/preprocess_data.py --config configs/train.yaml
@@ -76,64 +80,66 @@ python scripts/preprocess_data.py --config configs/train.yaml
 **Key config options** (`configs/train.yaml → data`):
 
 | Key | Default | Description |
-|-----|---------|-------------|
-| `num_intents` | 45 | Number of intent classes to keep |
-| `samples_per_intent` | 100 | Max samples per class |
-| `test_size` | 0.2 | Fraction held out for testing |
+|---|---|---|
+| `num_intents` | 45 | Number of intent classes to randomly keep |
+| `samples_per_intent` | 100 | Max training samples per class |
+| `test_size` | 0.2 | Fraction held out for testing (80/20 split) |
 
 ---
 
-## Step 2 – Train
+## 🏋️ Step 2 – Train
 
 ```bash
-bash train.sh 
-# for a background training and the train will be saved in log file:
+# One-shot training
+bash train.sh
+
+# Background training with log output
 nohup bash train.sh > train.log 2>&1 &
-# or directly:
+
+# Or run directly
 python scripts/train.py --config configs/train.yaml
 ```
 
 ### Hyperparameters (`configs/train.yaml`)
 
 | Hyperparameter | Value | Notes |
-|----------------|-------|-------|
+|---|---|---|
 | Base model | `unsloth/llama-3-8b-bnb-4bit` | 4-bit quantised LLaMA-3 8B |
 | LoRA rank (`r`) | 16 | Low-rank adapter dimension |
 | LoRA alpha | 32 | Scaling factor |
 | LoRA dropout | 0.05 | Regularisation |
 | Target modules | q/k/v/o/gate/up/down proj | All attention + MLP layers |
-| Batch size (device) | 8 | Per GPU |
-| Gradient accumulation | 2 | Effective batch = 16 |
-| Epochs | 5 | With early stopping (patience=2) |
+| Batch size (per device) | 8 | Per GPU |
+| Gradient accumulation | 2 | Effective batch size = 16 |
+| Epochs | 5 | With early stopping (patience = 2) |
 | Learning rate | 2e-4 | Cosine schedule |
-| Warmup ratio | 0.05 | 5 % of total steps |
+| Warmup ratio | 0.05 | 5% of total steps |
 | Weight decay | 0.01 | AdamW regularisation |
 | Optimizer | `adamw_8bit` | Unsloth memory-efficient AdamW |
-| Precision | bf16 | Use `fp16: true` if no bf16 support |
+| Precision | bf16 | Use `fp16: true` if bf16 unsupported |
 | Max sequence length | 128 | Tokens per sample |
-| Metric for best model | `eval_accuracy` | Saved at highest accuracy |
+| Best model metric | `eval_accuracy` | Checkpoint saved at peak accuracy |
 
 The best checkpoint is automatically saved to `outputs/banking-intent/best_model/`.
 
 ---
 
-## Step 3 – Inference
+## 🔍 Step 3 – Inference
 
-### Single message
+### Single message (CLI)
 
 ```bash
-bash inference.sh "I lost my credit card and need a new one"
-# Output:
-# Input  : I lost my credit card and need a new one
-# Intent : lost_or_stolen_card
+bash inference.sh "I ordered my new physical card a week ago, when will it arrive?"
+# Input  : I ordered my new physical card a week ago, when will it arrive?
+# Intent : card_arrival
 ```
 
 ### Interactive mode
 
 ```bash
 bash inference.sh
-# Message: What is the exchange rate today?
-# Intent : exchange_rate
+# Message: I forgot my PIN code, how can I change it inside the app?
+# Intent : change_pin
 ```
 
 ### Python API
@@ -146,35 +152,119 @@ clf = IntentClassification("configs/inference.yaml")
 print(clf("How do I reset my PIN?"))
 # → "change_pin"
 
-print(clf("Why was I charged a fee?"))
-# → "extra_charge_on_statement"
+print(clf("Why was I charged twice for the same coffee?"))
+# → "transaction_charged_twice"
 ```
 
+The `IntentClassification` class exposes two methods as required:
+- `__init__(model_path)` — loads the config file, tokenizer, and LoRA checkpoint.
+- `__call__(message)` — accepts a raw text message and returns the predicted intent label.
+
 ---
 
-## Results
+## 📈 Results
+
+Fine-tuned on **3,600 training samples** across 45 intent classes, evaluated on **900 test samples**.
 
 | Metric | Value |
-|--------|-------|
-| Test Accuracy | _filled after training_ |
+|---|---|
+| **Test Accuracy** | **95.00%** |
+| Macro Avg Precision | 0.95 |
+| Macro Avg Recall | 0.95 |
+| Macro Avg F1-Score | 0.95 |
 
-After training, test accuracy and a per-class classification report are printed to the console.
+<details>
+<summary><b>📋 Full Classification Report (click to expand)</b></summary>
+
+```
+                                         precision    recall  f1-score   support
+
+                  Refund_not_showing_up       0.95      1.00      0.98        20
+                              age_limit       1.00      1.00      1.00        20
+                apple_pay_or_google_pay       1.00      0.95      0.97        20
+                       automatic_top_up       1.00      1.00      1.00        20
+                beneficiary_not_allowed       1.00      0.95      0.97        20
+                        cancel_transfer       1.00      0.95      0.97        20
+                   card_about_to_expire       1.00      0.95      0.97        20
+                           card_arrival       0.94      0.80      0.86        20
+                 card_delivery_estimate       0.80      1.00      0.89        20
+                       card_not_working       0.95      0.95      0.95        20
+       card_payment_wrong_exchange_rate       1.00      0.80      0.89        20
+         cash_withdrawal_not_recognised       1.00      1.00      1.00        20
+                             change_pin       0.95      1.00      0.98        20
+                       compromised_card       1.00      1.00      1.00        20
+                        country_support       1.00      1.00      1.00        20
+                  declined_card_payment       0.87      1.00      0.93        20
+               declined_cash_withdrawal       1.00      0.90      0.95        20
+                 disposable_card_limits       1.00      0.85      0.92        20
+                  edit_personal_details       1.00      0.95      0.97        20
+                       exchange_via_app       1.00      1.00      1.00        20
+              extra_charge_on_statement       0.95      1.00      0.98        20
+                  fiat_currency_support       0.90      0.95      0.93        20
+            get_disposable_virtual_card       0.91      1.00      0.95        20
+                      get_physical_card       1.00      0.95      0.97        20
+                    order_physical_card       0.95      0.95      0.95        20
+                     passcode_forgotten       1.00      0.95      0.97        20
+                   pending_card_payment       0.95      0.90      0.92        20
+                pending_cash_withdrawal       0.95      1.00      0.98        20
+                         pending_top_up       0.95      0.90      0.92        20
+                            pin_blocked       1.00      0.95      0.97        20
+                         request_refund       1.00      0.85      0.92        20
+         supported_cards_and_currencies       0.82      0.90      0.86        20
+                      terminate_account       1.00      1.00      1.00        20
+               top_up_by_cash_or_cheque       0.94      0.80      0.86        20
+                          top_up_failed       0.95      0.95      0.95        20
+                          top_up_limits       1.00      0.95      0.97        20
+                        top_up_reverted       0.86      0.95      0.90        20
+                     topping_up_by_card       0.90      0.90      0.90        20
+              transaction_charged_twice       0.80      1.00      0.89        20
+                   transfer_fee_charged       0.95      0.95      0.95        20
+                  transfer_into_account       0.90      0.95      0.93        20
+              unable_to_verify_identity       0.91      1.00      0.95        20
+                 verify_source_of_funds       1.00      0.95      0.97        20
+          wrong_amount_of_cash_received       1.00      1.00      1.00        20
+wrong_exchange_rate_for_cash_withdrawal       0.87      1.00      0.93        20
+
+                               accuracy                           0.95       900
+                              macro avg       0.95      0.95      0.95       900
+                           weighted avg       0.95      0.95      0.95       900
+```
+
+</details>
 
 ---
 
-## Video Demonstration
+## 🎬 Video Demonstration
 
-[Google Drive link – add after recording]
+> 📎 **[Chèn link video Google Drive của bạn vào đây]** *(ensure the video is set to public)*
 
-The video shows:
-1. Running `train.sh` and the training output
-2. Running `inference.sh` with example messages
-3. The final test accuracy printed to the console
+The video demonstrates:
+1. Running `inference.sh` interactively from the command line.
+2. Example input messages being processed by the fine-tuned LLaMA-3 model.
+3. Accurate intent labels returned in real time.
+4. The final **95.00% accuracy** as verified from training logs.
 
 ---
 
-## References
+## 💾 Model Checkpoints
 
-- [BANKING77 dataset](https://huggingface.co/datasets/PolyAI/banking77)
-- [Unsloth](https://github.com/unslothai/unsloth)
-- [HuggingFace Transformers](https://huggingface.co/docs/transformers)
+The trained LoRA checkpoint and classifier head are available for download on Google Drive:
+
+> 📂 **[outputs/ — Model Checkpoints (Google Drive)](https://drive.google.com/drive/folders/1KCyYyJ8lpYQ6Deq5-HHkCX1QzhfbT9gC?usp=sharing)**
+
+To use the downloaded checkpoint, update `configs/inference.yaml` with the local path to the `best_model/` folder, then run inference as described in Step 3.
+
+---
+
+## 📚 References
+
+- [BANKING77 Dataset](https://huggingface.co/datasets/PolyAI/banking77) — PolyAI / HuggingFace
+- [Unsloth AI](https://github.com/unslothai/unsloth) — Fast LLM fine-tuning library
+- [HuggingFace Transformers](https://huggingface.co/docs/transformers) — Model hub & training utilities
+- [LLaMA-3 8B (4-bit)](https://huggingface.co/unsloth/llama-3-8b-bnb-4bit) — Base model used for fine-tuning
+
+---
+
+<div align="center">
+  <sub>Project 2 · Applications of NLP in Industry · HCMUS Faculty of Information Technology · 04/2026</sub>
+</div>
